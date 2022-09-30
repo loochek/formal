@@ -73,6 +73,19 @@ namespace formal {
             }
         }
 
+        /// Used by DFA builder
+        std::string GenSetLabel(const std::set<AutomatonState*>& states) {
+            std::string label = "[";
+            for (AutomatonState* state: states) {
+                label.append(state->GetLabel());
+                label.append(", ");
+            }
+
+            label.resize(label.size() - 2);
+            label.append("]");
+            return label;
+        }
+
     } // namespace
 
     void DumpAutomaton(const Automaton &automaton, const std::string& out_file_name) {
@@ -83,7 +96,7 @@ namespace formal {
         auto& final_states = automaton.GetFinalStates();
         for (AutomatonState* state : automaton.GetStates()) {
             std::string shape = final_states.find(state) != final_states.end() ? "doublecircle" : "circle";
-            dot_file << fmt::format("{} [shape=\"{}\", label=\"{}\"]\n", PtrToIndex(state), shape, state->GetNodeId());
+            dot_file << fmt::format("{} [shape=\"{}\", label=\"{}\"]\n", PtrToIndex(state), shape, state->GetLabel());
         }
 
         if (automaton.GetInitialState() != nullptr) {
@@ -169,6 +182,8 @@ namespace formal {
                 AutomatonState* dst_dfa_repr = nullptr;
                 if (old2new.find(nfa_states_dst_word) == old2new.end()) {
                     dst_dfa_repr = dfa.InsertState();
+                    dst_dfa_repr->SetLabel(GenSetLabel(nfa_states_dst_word));
+
                     old2new[nfa_states_dst_word] = dst_dfa_repr;
                     new2old[dst_dfa_repr] = nfa_states_dst_word;
 

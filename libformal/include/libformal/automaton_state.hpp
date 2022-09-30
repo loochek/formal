@@ -12,7 +12,8 @@ namespace formal {
         using TransitionSet = std::multimap<std::string, AutomatonState*>;
     public:
         AutomatonState() = delete;
-        explicit AutomatonState(Automaton* owner) : owner_(owner), final_(false), node_id_(owner->GetNextNodeId()) {}
+        explicit AutomatonState(Automaton* owner) :
+          owner_(owner), final_(false), node_id_(owner->GetNextNodeId()), label_(std::to_string(node_id_)) {}
 
         bool TransitionPresent(const std::string& word, AutomatonState* dst_state) const {
             return GetTransitionIter(word, dst_state) != transitions_.end();
@@ -52,6 +53,14 @@ namespace formal {
 
         int GetNodeId() const {
             return node_id_;
+        }
+
+        const std::string& GetLabel() const {
+            return label_;
+        }
+
+        void SetLabel(std::string label) {
+            label_ = std::move(label);
         }
 
         bool IsInitial() const {
@@ -120,6 +129,8 @@ namespace formal {
         TransitionSet back_transitions_;
 
         int node_id_;
+        std::string label_;
+
         bool final_;
 
         Automaton* const owner_;
