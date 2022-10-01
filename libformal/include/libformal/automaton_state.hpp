@@ -27,6 +27,8 @@ namespace formal {
 
             transitions_.insert({word, dst_state});
             dst_state->back_transitions_.insert({word, this});
+
+            owner_->OnNewTransition(this, dst_state, word);
         }
 
         void RemoveTransition(const std::string& word, AutomatonState* dst_state) {
@@ -43,11 +45,11 @@ namespace formal {
             dst_state->back_transitions_.erase(back_transition_iter);
         }
 
-        const auto GetTransitions() const {
+        const auto& GetTransitions() const {
             return transitions_;
         }
 
-        const auto GetBackTransitions() const {
+        const auto& GetBackTransitions() const {
             return back_transitions_;
         }
 

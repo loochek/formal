@@ -37,6 +37,9 @@ int main() {
     formal::DumpAutomaton(aut, "post_eps_rm");
     formal::TransformToDFA(aut);
     formal::DumpAutomaton(aut, "dfa");
-
+    formal::CompleteDFA(aut);
+    formal::DumpAutomaton(aut, "cdfa");
+    formal::ComplementCDFA(aut);
+    formal::DumpAutomaton(aut, "ccdfa");
     return 0;
 }

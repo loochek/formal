@@ -24,9 +24,21 @@ namespace formal {
     void Optimize(Automaton& automaton);
 
     /**
-     * Transforms NFA to DFA
+     * Transforms NFA to IsDFA
      * @param automaton Automaton to process. Must have defined initial state.
      * All transitions must be single-letter
      */
     void TransformToDFA(Automaton& automaton);
+
+    /**
+     * Transforms IsDFA to CDFA
+     * @param automaton Automaton to process. Must be IsDFA.
+     */
+    void CompleteDFA(Automaton& automaton);
+
+    /**
+     * Complements given CDFA (L(A) -> \sigma^* - L(A))
+     * @param automaton Automaton to process. Must be CDFA.
+     */
+    void ComplementCDFA(Automaton& automaton);
 }

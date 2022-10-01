@@ -2,6 +2,7 @@
 #include <fstream>
 #include <unordered_map>
 #include <unordered_set>
+#include <set>
 #include <queue>
 #include <fmt/core.h>
 #include <libformal/automaton_state.hpp>
@@ -73,7 +74,7 @@ namespace formal {
             }
         }
 
-        /// Used by DFA builder
+        /// Used by IsDFA builder
         std::string GenSetLabel(const std::set<AutomatonState*>& states) {
             std::string label = "[";
             for (AutomatonState* state: states) {
@@ -144,7 +145,7 @@ namespace formal {
     }
 
     void TransformToDFA(Automaton& automaton) {
-        assert(automaton.GetInitialState() != nullptr);
+        assert(automaton.GetInitialState() != nullptr && automaton.IsSingleLetter());
 
         Automaton dfa;
 
@@ -173,21 +174,21 @@ namespace formal {
             auto& nfa_states = new2old[dfa_repr];
             std::unordered_map<std::string, std::set<AutomatonState*>> nfa_states_dst;
             for (AutomatonState* nfa_state : nfa_states) {
-                for (auto& [word, nfa_state_dst] : nfa_state->GetTransitions()) {
-                    nfa_states_dst[word].insert(nfa_state_dst);
+                for (auto& [letter, nfa_state_dst] : nfa_state->GetTransitions()) {
+                    nfa_states_dst[letter].insert(nfa_state_dst);
                 }
             }
 
-            for (auto& [word, nfa_states_dst_word] : nfa_states_dst) {
+            for (auto& [word, nfa_states_dst_letter] : nfa_states_dst) {
                 AutomatonState* dst_dfa_repr = nullptr;
-                if (old2new.find(nfa_states_dst_word) == old2new.end()) {
+                if (old2new.find(nfa_states_dst_letter) == old2new.end()) {
                     dst_dfa_repr = dfa.InsertState();
-                    dst_dfa_repr->SetLabel(GenSetLabel(nfa_states_dst_word));
+                    dst_dfa_repr->SetLabel(GenSetLabel(nfa_states_dst_letter));
 
-                    old2new[nfa_states_dst_word] = dst_dfa_repr;
-                    new2old[dst_dfa_repr] = nfa_states_dst_word;
+                    old2new[nfa_states_dst_letter] = dst_dfa_repr;
+                    new2old[dst_dfa_repr] = nfa_states_dst_letter;
 
-                    for (AutomatonState* nfa_dst_state : nfa_states_dst_word) {
+                    for (AutomatonState* nfa_dst_state : nfa_states_dst_letter) {
                         if (nfa_dst_state->IsFinal()) {
                             dst_dfa_repr->MarkAsFinal();
                             break;
@@ -196,7 +197,7 @@ namespace formal {
 
                     queue.push(dst_dfa_repr);
                 } else {
-                    dst_dfa_repr = old2new[nfa_states_dst_word];
+                    dst_dfa_repr = old2new[nfa_states_dst_letter];
                 }
 
                 dfa_repr->AddTransition(word, dst_dfa_repr);
@@ -204,5 +205,51 @@ namespace formal {
         }
 
         automaton = std::move(dfa);
+    }
+
+    void CompleteDFA(Automaton& automaton) {
+        assert(automaton.IsDFA());
+
+        AutomatonState* drain = automaton.InsertState();
+        drain->SetLabel("drain");
+
+        for (AutomatonState* state : automaton.GetStates()) {
+            if (state == drain) {
+                continue;
+            }
+
+            std::unordered_set<char> present_trans;
+            for (auto& [letter, dst_state] : state->GetTransitions()) {
+                present_trans.insert(letter[0]);
+            }
+
+            for (char letter : automaton.GetAlphabet()) {
+                if (present_trans.find(letter) == present_trans.end()) {
+                    state->AddTransition(std::to_string(letter), drain);
+                }
+            }
+        }
+
+        if (drain->GetBackTransitions().empty()) {
+            // Remove drain if already CDFA
+            drain->Remove();
+        } else {
+            // Add drain loops otherwise
+            for (char letter : automaton.GetAlphabet()) {
+                drain->AddTransition(std::to_string(letter), drain);
+            }
+        }
+    }
+
+    void ComplementCDFA(Automaton& automaton) {
+        assert(automaton.IsDFA()); // TODO: CDFA check
+
+        for (AutomatonState *state : automaton.GetStates()) {
+            if (state->IsFinal()) {
+                state->UnmarkAsFinal();
+            } else {
+                state->MarkAsFinal();
+            }
+        }
     }
 }
