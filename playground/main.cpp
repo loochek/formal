@@ -178,6 +178,7 @@ int main() {
 
     hw4_task5();
     hw4_task6();
+    hw4_task4();
 
     return 0;
 }

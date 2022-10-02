@@ -46,13 +46,14 @@ namespace formal {
      * Makes |F|=1 (breaking all properties :) )
      * @param automaton Automaton to process
      */
-    void SinglifyFinalState(Automaton& automaton);
+    void SinglifyFinalState(Automaton& automaton, bool force = false);
 
     /**
-     * Transforms given automaton to the regular automaton with |Q| <= 2
+     * Generates a regular expression for the given automaton.
+     * Note that automaton is completely trashed by this method
      * @param automaton Automaton to process.
      */
-     void NFAToRegExp(Automaton& automaton);
+     std::string NFAToRegExp(Automaton& automaton);
 
     /**
      * Tries to read given word in given DFA

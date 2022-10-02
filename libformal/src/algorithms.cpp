@@ -306,8 +306,8 @@ namespace formal {
         }
     }
 
-    void SinglifyFinalState(Automaton &automaton) {
-        if (automaton.GetFinalStates().size() <= 1) {
+    void SinglifyFinalState(Automaton &automaton, bool force) {
+        if (automaton.GetFinalStates().size() <= 1 && (!force)) {
             return;
         }
 
@@ -325,12 +325,17 @@ namespace formal {
         assert(automaton.GetFinalStates().size() == 1);
     }
 
-    void NFAToRegExp(Automaton &automaton) {
+    std::string NFAToRegExp(Automaton &automaton) {
         int finals_count = automaton.GetFinalStates().size();
         if (finals_count == 0 || automaton.GetInitialState() == nullptr) {
-            return;
+            return "0";
         } else if (finals_count > 0) {
             SinglifyFinalState(automaton);
+        }
+
+        if (automaton.GetInitialState()->IsFinal()) {
+            // Force split initial and final states
+            SinglifyFinalState(automaton, true);
         }
 
         assert(automaton.GetFinalStates().size() == 1);
@@ -399,7 +404,69 @@ namespace formal {
             CollapseMultipleEdges(automaton);
         }
 
-        assert(automaton.GetStates().size() <= 2);
+        assert(automaton.GetStates().size() == 2);
+        assert(automaton.GetFinalStates().size() == 1);
+
+        AutomatonState* initial = automaton.GetInitialState();
+        AutomatonState* final = *automaton.GetFinalStates().begin();
+        assert(initial != final);
+
+        // Determined regexp generation for the simple case
+
+        const std::string *iloop = nullptr, *floop = nullptr, *internode_fw = nullptr, *internode_bw = nullptr;
+
+        for (auto& [word, dst_state] : initial->GetTransitions()) {
+            if (dst_state == initial) {
+                iloop = &word;
+            } else if (dst_state == final) {
+                internode_fw = &word;
+            }
+        }
+
+        for (auto& [word, dst_state] : final->GetTransitions()) {
+            if (dst_state == initial) {
+                internode_bw = &word;
+            } else if (dst_state == final) {
+                floop = &word;
+            }
+        }
+
+        assert(internode_fw != nullptr);
+
+        std::string regexp;
+
+        // first half
+
+        if (iloop != nullptr) {
+            regexp.append(fmt::format("({})*", *iloop));
+        }
+
+        regexp.append(AutoBrace(*internode_fw));
+
+        if (floop != nullptr) {
+            regexp.append(fmt::format("({})*", *floop));
+        }
+
+        if (internode_bw != nullptr) {
+            // second half - possible to return to initial if bw transition present
+            std::string regexp2;
+
+            regexp2.append(AutoBrace(*internode_bw));
+
+            if (iloop != nullptr) {
+                regexp2.append(fmt::format("({})*", *iloop));
+            }
+
+            regexp2.append(AutoBrace(*internode_fw));
+
+            if (floop != nullptr) {
+                regexp2.append(fmt::format("({})*", *floop));
+            }
+
+            regexp.append(fmt::format("({})*", regexp2));
+        }
+
+        return regexp;
     }
 
     bool DFAReadWord(Automaton &dfa, const std::string& word) {

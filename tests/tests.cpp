@@ -1,6 +1,7 @@
 #include <libformal/algorithms.hpp>
 #include <libformal/automaton_state.hpp>
 #include <gtest/gtest.h>
+#include <fmt/core.h>
 
 TEST(GeneralTest, Hw3Task1Test) {
     // hw3 task1 automaton
@@ -98,11 +99,13 @@ TEST(GeneralTest, Hw4Task5Test) {
     EXPECT_TRUE(formal::DFAReadWord(aut, "aabab"));
     EXPECT_TRUE(formal::DFAReadWord(aut, ""));
 
-    formal::NFAToRegExp(aut);
+    std::string regexp = formal::NFAToRegExp(aut);
     EXPECT_TRUE(aut.GetStates().size() == 2 && aut.GetInitialState()->GetTransitions().size() == 1);
     formal::AutomatonState* sec = aut.GetInitialState()->GetTransitions().begin()->second;
     EXPECT_EQ(aut.GetInitialState()->GetTransitions().begin()->first, "1+b(a+b)*+a((a(a(a+b(ab)*aa)*(b(ab)*b)+b)+b)(a(aa(a+b(ab)*aa)*(b(ab)*b)+ab+b))*(1+b(a+b)*+a))");
     EXPECT_TRUE(sec->IsFinal() && sec->GetTransitions().size() == 0);
+
+    EXPECT_EQ(regexp, "(1+b(a+b)*+a((a(a(a+b(ab)*aa)*(b(ab)*b)+b)+b)(a(aa(a+b(ab)*aa)*(b(ab)*b)+ab+b))*(1+b(a+b)*+a)))");
 }
 
 TEST(GeneralTest, Hw4Task6Test) {
@@ -152,11 +155,30 @@ TEST(GeneralTest, Hw4Task6Test) {
     EXPECT_TRUE(formal::DFAReadWord(aut, "aabbabbbbb"));
     EXPECT_TRUE(formal::DFAReadWord(aut, ""));
 
-    formal::NFAToRegExp(aut);
+    std::string regexp = formal::NFAToRegExp(aut);
     EXPECT_TRUE(aut.GetStates().size() == 2 && aut.GetInitialState()->GetTransitions().size() == 1);
     formal::AutomatonState* sec = aut.GetInitialState()->GetTransitions().begin()->second;
     EXPECT_EQ(aut.GetInitialState()->GetTransitions().begin()->first, "1+b(a+b)*+a(ab)*(1+a(1+a(a+b)*)+b((a((a(a+ba)*bb+b)a)*((a(a+ba)*bb+b)b)+b)(aa((a(a+ba)*bb+b)a)*((a(a+ba)*bb+b)b)+ab)*(1+b(a+b)*)))");
     EXPECT_TRUE(sec->IsFinal() && sec->GetTransitions().size() == 0);
+    EXPECT_EQ(regexp, "(1+b(a+b)*+a(ab)*(1+a(1+a(a+b)*)+b((a((a(a+ba)*bb+b)a)*((a(a+ba)*bb+b)b)+b)(aa((a(a+ba)*bb+b)a)*((a(a+ba)*bb+b)b)+ab)*(1+b(a+b)*))))");
+}
+
+TEST(GeneralTest, RegExpGenTest) {
+    formal::Automaton aut;
+
+    formal::AutomatonState* initial = aut.InsertState();
+    formal::AutomatonState* final = aut.InsertState();
+
+    initial->MarkAsInitial();
+    final->MarkAsFinal();
+
+    initial->AddTransition("a", final);
+    final->AddTransition("b", initial);
+    initial->AddTransition("a", initial);
+    final->AddTransition("b", final);
+
+    std::string regexp = formal::NFAToRegExp(aut);
+    ASSERT_EQ(regexp, "(a)*a(b)*(b(a)*a(b)*)*");
 }
 
 TEST(GeneralTest, Test1) {
