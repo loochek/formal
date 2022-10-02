@@ -57,7 +57,9 @@ namespace formal {
             // Yes, we need a copy
             auto old_transitions = state->GetTransitions();
             for (auto& [word, dst_state] : old_transitions) {
-                state->RemoveTransition("", dst_state);
+                if (word.empty()) {
+                    state->RemoveTransition("", dst_state);
+                }
             }
         }
 
@@ -74,7 +76,7 @@ namespace formal {
             }
         }
 
-        /// Used by IsDFA builder
+        /// Used by DFA builder
         std::string GenSetLabel(const std::set<AutomatonState*>& states) {
             std::string label = "[";
             for (AutomatonState* state: states) {
@@ -85,6 +87,57 @@ namespace formal {
             label.resize(label.size() - 2);
             label.append("]");
             return label;
+        }
+
+        /// Used by NFAToRegExp
+        void RenameEpsTransitions(Automaton& automaton) {
+            for (AutomatonState* state : automaton.GetStates()) {
+                // Yes, we need a copy
+                auto transitions = state->GetTransitions();
+                for (auto& [word, dst_state] : transitions) {
+                    if (word.empty()) {
+                        state->RemoveTransition(word, dst_state);
+                        state->AddTransition("1", dst_state);
+                    }
+                }
+            }
+        }
+
+        /// Used by NFAToRegExp
+        void CollapseMultipleEdges(Automaton& automaton) {
+            for (AutomatonState* state : automaton.GetStates()) {
+                std::unordered_map<AutomatonState*, std::vector<std::string>> transitions_by_state;
+                for (auto& [word, dst_state] : state->GetTransitions()) {
+                    transitions_by_state[dst_state].push_back(word);
+                }
+
+                for (auto& [dst_state, words] : transitions_by_state) {
+                    if (words.size() == 1) {
+                        continue;
+                    }
+
+                    for (std::string& word : words) {
+                        state->RemoveTransition(word, dst_state);
+                    }
+
+                    std::string new_word = words[0];
+                    for (int i = 1; i < words.size(); i++) {
+                        new_word.append("+");
+                        new_word.append(words[i]);
+                    }
+
+                    state->AddTransition(new_word, dst_state);
+                }
+            }
+        }
+
+        /// Used by NFAToRegExp
+        std::string AutoBrace(const std::string& regexp) {
+            if (regexp.find('+') != -1 || regexp.find('*') != -1) {
+                return fmt::format("({})", regexp);
+            } else {
+                return regexp;
+            }
         }
 
     } // namespace
@@ -225,7 +278,7 @@ namespace formal {
 
             for (char letter : automaton.GetAlphabet()) {
                 if (present_trans.find(letter) == present_trans.end()) {
-                    state->AddTransition(std::to_string(letter), drain);
+                    state->AddTransition(std::string(1,letter), drain);
                 }
             }
         }
@@ -236,7 +289,7 @@ namespace formal {
         } else {
             // Add drain loops otherwise
             for (char letter : automaton.GetAlphabet()) {
-                drain->AddTransition(std::to_string(letter), drain);
+                drain->AddTransition(std::string(1,letter), drain);
             }
         }
     }
@@ -251,5 +304,117 @@ namespace formal {
                 state->MarkAsFinal();
             }
         }
+    }
+
+    void SinglifyFinalState(Automaton &automaton) {
+        if (automaton.GetFinalStates().size() <= 1) {
+            return;
+        }
+
+        // Yes, we need a copy
+        auto old_finals = automaton.GetFinalStates();
+
+        AutomatonState* new_final = automaton.InsertState();
+        new_final->MarkAsFinal();
+
+        for (AutomatonState* old_final : old_finals) {
+            old_final->UnmarkAsFinal();
+            old_final->AddTransition("", new_final);
+        }
+
+        assert(automaton.GetFinalStates().size() == 1);
+    }
+
+    void NFAToRegExp(Automaton &automaton) {
+        int finals_count = automaton.GetFinalStates().size();
+        if (finals_count == 0 || automaton.GetInitialState() == nullptr) {
+            return;
+        } else if (finals_count > 0) {
+            SinglifyFinalState(automaton);
+        }
+
+        assert(automaton.GetFinalStates().size() == 1);
+
+        RenameEpsTransitions(automaton);
+        CollapseMultipleEdges(automaton);
+
+        while (true) {
+            AutomatonState* victim = nullptr;
+            for (AutomatonState* victim_candidate : automaton.GetStates()) {
+                if (!(victim_candidate->IsFinal() || victim_candidate->IsInitial())) {
+                    victim = victim_candidate;
+                    break;
+                }
+            }
+
+            if (victim == nullptr) {
+                break;
+            }
+
+            const std::string* loop_re = nullptr;
+            for (auto& [dst_re, dst_state] : victim->GetTransitions()) {
+                if (dst_state == victim) {
+                    loop_re = &dst_re;
+                    break;
+                }
+            }
+
+            for (auto& [src_re, src_state] : victim->GetBackTransitions()) {
+                if (src_state == victim) {
+                    continue;
+                }
+
+                for (auto& [dst_re, dst_state] : victim->GetTransitions()) {
+                    if (dst_state == victim) {
+                        continue;
+                    }
+
+                    std::string shortcut_re;
+                    if (loop_re == nullptr && dst_re == "1") {
+                        shortcut_re = fmt::format("{}", src_re);
+                    }
+                    else if (loop_re == nullptr && src_re == "1") {
+                        shortcut_re = fmt::format("{}", dst_re);
+                    }
+                    else if (src_re == "1" && dst_re == "1" && loop_re != nullptr) {
+                        shortcut_re = fmt::format("({})*", *loop_re);
+                    }
+                    else if (loop_re == nullptr || *loop_re == "1") {
+                        shortcut_re = fmt::format("{}{}", AutoBrace(src_re), AutoBrace(dst_re));
+                    }
+                    else if (src_re == "1") {
+                        shortcut_re = fmt::format("({})*{}", *loop_re, AutoBrace(dst_re));
+                    }
+                    else if (dst_re == "1") {
+                        shortcut_re = fmt::format("{}({})*", AutoBrace(src_re), *loop_re);
+                    } else {
+                        shortcut_re = fmt::format("{}({})*{}", AutoBrace(src_re), *loop_re, AutoBrace(dst_re));
+                    }
+
+                    src_state->AddTransition(shortcut_re, dst_state);
+                }
+            }
+
+            victim->Remove();
+            CollapseMultipleEdges(automaton);
+        }
+
+        assert(automaton.GetStates().size() <= 2);
+    }
+
+    bool DFAReadWord(Automaton &dfa, const std::string& word) {
+        assert(dfa.IsDFA());
+
+        AutomatonState* curr_state = dfa.GetInitialState();
+        for (char letter : word) {
+            auto iter = curr_state->GetTransitions().equal_range(std::string(1, letter)).first;
+            if (iter->first != std::string(1, letter)) {
+                return false;
+            } else {
+                curr_state = iter->second;
+            }
+        }
+
+        return curr_state->IsFinal();
     }
 }

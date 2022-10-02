@@ -41,4 +41,23 @@ namespace formal {
      * @param automaton Automaton to process. Must be CDFA.
      */
     void ComplementCDFA(Automaton& automaton);
+
+    /**
+     * Makes |F|=1 (breaking all properties :) )
+     * @param automaton Automaton to process
+     */
+    void SinglifyFinalState(Automaton& automaton);
+
+    /**
+     * Transforms given automaton to the regular automaton with |Q| <= 2
+     * @param automaton Automaton to process.
+     */
+     void NFAToRegExp(Automaton& automaton);
+
+    /**
+     * Tries to read given word in given DFA
+     * @param automaton Automaton
+     * @return True if word is accepted by automaton, false otherwise
+     */
+    bool DFAReadWord(Automaton& automaton, const std::string& word);
 }

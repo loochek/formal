@@ -17,7 +17,7 @@ namespace formal {
         friend class AutomatonState;
 
     public:
-        Automaton(std::unordered_set<char> alphabet = { 'a', 'b' });
+        explicit Automaton(std::unordered_set<char> alphabet = { 'a', 'b' });
         ~Automaton();
 
         // I'm lazy ¯\_(ツ)_/¯

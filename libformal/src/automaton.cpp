@@ -11,6 +11,10 @@ namespace formal {
       states_(std::move(other.states_)), final_states_(std::move(other.final_states_)) {
         other.initial_state_ = nullptr;
         other.node_counter_ = 0;
+
+        for (AutomatonState* state : states_) {
+            state->ReassignOwner(this);
+        }
     }
 
     Automaton& Automaton::operator=(Automaton &&other) noexcept {
@@ -25,6 +29,10 @@ namespace formal {
 
         other.initial_state_ = nullptr;
         other.node_counter_ = 0;
+
+        for (AutomatonState* state : states_) {
+            state->ReassignOwner(this);
+        }
 
         return *this;
     }

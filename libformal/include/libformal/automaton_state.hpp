@@ -9,7 +9,9 @@ namespace formal {
      * Class which represents an NFA node
      */
     class AutomatonState {
+        friend class Automaton;
         using TransitionSet = std::multimap<std::string, AutomatonState*>;
+
     public:
         AutomatonState() = delete;
         explicit AutomatonState(Automaton* owner) :
@@ -35,6 +37,7 @@ namespace formal {
             assert(owner_->Belongs(dst_state));
 
             auto transition_iter = GetTransitionIter(word, dst_state);
+            assert(transition_iter != transitions_.end());
             if (transition_iter == transitions_.end()) {
                 return;
             }
@@ -42,6 +45,7 @@ namespace formal {
             transitions_.erase(transition_iter);
 
             auto back_transition_iter = dst_state->GetBackTransitionIter(word, this);
+            assert(back_transition_iter != dst_state->back_transitions_.end());
             dst_state->back_transitions_.erase(back_transition_iter);
         }
 
@@ -92,7 +96,15 @@ namespace formal {
         }
 
         void Remove() {
-            for (auto& [word, back_state] : GetBackTransitions()) {
+            // Yes, we need a copy
+            auto transitions = GetTransitions();
+            for (auto& [word, dst_state] : transitions) {
+                RemoveTransition(word, dst_state);
+            }
+
+            // Yes, we need a copy
+            auto back_transitions = GetBackTransitions();
+            for (auto& [word, back_state] : back_transitions) {
                 back_state->RemoveTransition(word, this);
             }
 
@@ -126,6 +138,11 @@ namespace formal {
             return transitions.end();
         }
 
+        // Used by Automaton move constructor
+        void ReassignOwner(Automaton* owner) {
+            owner_ = owner;
+        }
+
     private:
         TransitionSet transitions_;
         TransitionSet back_transitions_;
@@ -135,6 +152,6 @@ namespace formal {
 
         bool final_;
 
-        Automaton* const owner_;
+        Automaton* owner_;
     };
 }
