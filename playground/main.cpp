@@ -96,7 +96,7 @@ void hw4_task6() {
     formal::DumpAutomaton(aut, "hw4_t6_cdfa");
     formal::ComplementCDFA(aut);
     formal::DumpAutomaton(aut, "hw4_t6_ccdfa");
-    formal::NFAToRegExp(aut);
+    std::string regexp = formal::NFAToRegExp(aut);
     formal::DumpAutomaton(aut, "hw4_t6_re");
 }
 
@@ -176,8 +176,8 @@ int main() {
 //    formal::ComplementCDFA(aut);
 //    formal::DumpAutomaton(aut, "ccdfa");
 
-    hw4_task5();
-    hw4_task6();
+//    hw4_task5();
+//    hw4_task6();
     hw4_task4();
 
     return 0;

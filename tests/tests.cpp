@@ -105,6 +105,7 @@ TEST(GeneralTest, Hw4Task5Test) {
     EXPECT_EQ(aut.GetInitialState()->GetTransitions().begin()->first, "1+b(a+b)*+a((a(a(a+b(ab)*aa)*(b(ab)*b)+b)+b)(a(aa(a+b(ab)*aa)*(b(ab)*b)+ab+b))*(1+b(a+b)*+a))");
     EXPECT_TRUE(sec->IsFinal() && sec->GetTransitions().size() == 0);
 
+    // Answer to hw4t5
     EXPECT_EQ(regexp, "(1+b(a+b)*+a((a(a(a+b(ab)*aa)*(b(ab)*b)+b)+b)(a(aa(a+b(ab)*aa)*(b(ab)*b)+ab+b))*(1+b(a+b)*+a)))");
 }
 
@@ -156,10 +157,13 @@ TEST(GeneralTest, Hw4Task6Test) {
     EXPECT_TRUE(formal::DFAReadWord(aut, ""));
 
     std::string regexp = formal::NFAToRegExp(aut);
+
     EXPECT_TRUE(aut.GetStates().size() == 2 && aut.GetInitialState()->GetTransitions().size() == 1);
     formal::AutomatonState* sec = aut.GetInitialState()->GetTransitions().begin()->second;
     EXPECT_EQ(aut.GetInitialState()->GetTransitions().begin()->first, "1+b(a+b)*+a(ab)*(1+a(1+a(a+b)*)+b((a((a(a+ba)*bb+b)a)*((a(a+ba)*bb+b)b)+b)(aa((a(a+ba)*bb+b)a)*((a(a+ba)*bb+b)b)+ab)*(1+b(a+b)*)))");
     EXPECT_TRUE(sec->IsFinal() && sec->GetTransitions().size() == 0);
+
+    // Answer to hw4t6
     EXPECT_EQ(regexp, "(1+b(a+b)*+a(ab)*(1+a(1+a(a+b)*)+b((a((a(a+ba)*bb+b)a)*((a(a+ba)*bb+b)b)+b)(aa((a(a+ba)*bb+b)a)*((a(a+ba)*bb+b)b)+ab)*(1+b(a+b)*))))");
 }
 
