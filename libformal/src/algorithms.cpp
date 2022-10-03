@@ -200,7 +200,7 @@ namespace formal {
     void TransformToDFA(Automaton& automaton) {
         assert(automaton.GetInitialState() != nullptr && automaton.IsSingleLetter());
 
-        Automaton dfa;
+        Automaton dfa(automaton.GetAlphabet());
 
         AutomatonState* dfa_init_state = dfa.InsertState();
         dfa_init_state->MarkAsInitial();
@@ -295,7 +295,7 @@ namespace formal {
     }
 
     void ComplementCDFA(Automaton& automaton) {
-        assert(automaton.IsDFA()); // TODO: CDFA check
+        assert(IsCDFA(automaton));
 
         for (AutomatonState *state : automaton.GetStates()) {
             if (state->IsFinal()) {
@@ -304,6 +304,75 @@ namespace formal {
                 state->MarkAsFinal();
             }
         }
+    }
+
+    void MinimizeCDFA(Automaton &automaton) {
+        assert(IsCDFA(automaton));
+
+        std::unordered_map<AutomatonState*, int> classes;
+
+        // Initial classes
+        for (AutomatonState* state : automaton.GetStates()) {
+            classes[state] = static_cast<int>(state->IsFinal());
+        }
+
+        std::map<std::pair<int, std::vector<int>>, std::set<AutomatonState*>> huge_classes;
+        while (true) {
+            huge_classes.clear();
+
+            for (AutomatonState* state : automaton.GetStates()) {
+                std::vector<int> trans;
+                for (char letter : automaton.GetAlphabet()) {
+                    auto iter = state->GetTransitions().find(std::string(1, letter));
+                    assert(iter != state->GetTransitions().end());
+                    trans.push_back(classes[iter->second]);
+                }
+
+                huge_classes[{classes[state], trans}].insert(state);
+            }
+
+            int slim_cls_cnt = 0;
+            std::unordered_map<AutomatonState*, int> new_slim_classes;
+            for (auto& [cls, states] : huge_classes) {
+                for (AutomatonState* state2 : states) {
+                    new_slim_classes[state2] = slim_cls_cnt;
+                }
+
+                slim_cls_cnt++;
+            }
+
+            if (classes == new_slim_classes) {
+                break;
+            } else {
+                classes = new_slim_classes;
+            }
+        }
+
+        Automaton mcdfa(automaton.GetAlphabet());
+        std::vector<AutomatonState*> cls_nodes(huge_classes.size());
+        for (int i = 0; i < cls_nodes.size(); i++) {
+            cls_nodes[i] = mcdfa.InsertState();
+        }
+
+        for (auto& [cls, states] : huge_classes) {
+            for (AutomatonState* old_state : states) {
+                if (old_state->IsFinal()) {
+                    cls_nodes[cls.first]->MarkAsFinal();
+                }
+
+                if (old_state->IsInitial()) {
+                    cls_nodes[cls.first]->MarkAsInitial();
+                }
+            }
+
+            auto alph_iter = automaton.GetAlphabet().begin();
+            for (int dst_class : cls.second) {
+                cls_nodes[cls.first]->AddTransition(std::string(1, *alph_iter), cls_nodes[dst_class]);
+                alph_iter++;
+            }
+        }
+
+        automaton = std::move(mcdfa);
     }
 
     void SinglifyFinalState(Automaton &automaton, bool force) {
@@ -469,7 +538,7 @@ namespace formal {
         return regexp;
     }
 
-    bool DFAReadWord(Automaton &dfa, const std::string& word) {
+    bool DFAReadWord(const Automaton &dfa, const std::string& word) {
         assert(dfa.IsDFA());
 
         AutomatonState* curr_state = dfa.GetInitialState();
@@ -483,5 +552,24 @@ namespace formal {
         }
 
         return curr_state->IsFinal();
+    }
+
+    bool IsCDFA(const Automaton& automaton) {
+        if (!automaton.IsDFA()) {
+            return false;
+        }
+
+        for (AutomatonState* state : automaton.GetStates()) {
+            std::unordered_set<char> trans;
+            for (auto& [letter, dst_state] : state->GetTransitions()) {
+                trans.insert(letter[0]);
+            }
+
+            if (trans != automaton.GetAlphabet()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

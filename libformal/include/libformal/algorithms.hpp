@@ -43,6 +43,12 @@ namespace formal {
     void ComplementCDFA(Automaton& automaton);
 
     /**
+     * Minimizes CDFA
+     * @param automaton Automaton to process
+     */
+    void MinimizeCDFA(Automaton& automaton);
+
+    /**
      * Makes |F|=1 (breaking all properties :) )
      * @param automaton Automaton to process
      */
@@ -60,5 +66,12 @@ namespace formal {
      * @param automaton Automaton
      * @return True if word is accepted by automaton, false otherwise
      */
-    bool DFAReadWord(Automaton& automaton, const std::string& word);
+    bool DFAReadWord(const Automaton& automaton, const std::string& word);
+
+    /**
+     * Checks given DFA to be CDFA
+     * @param automaton Automaton
+     * @return True if CDFA, false otherwise
+     */
+    bool IsCDFA(const Automaton& automaton);
 }

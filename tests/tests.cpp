@@ -3,6 +3,55 @@
 #include <gtest/gtest.h>
 #include <fmt/core.h>
 
+void Hw4Task5Aut(formal::Automaton& aut) {
+    // hw4 task5 automaton
+
+    auto s1 = aut.InsertState();
+    auto s2 = aut.InsertState();
+    auto s3 = aut.InsertState();
+    auto s4 = aut.InsertState();
+    auto s5 = aut.InsertState();
+    auto s6 = aut.InsertState();
+
+    s1->AddTransition("a", s2);
+    s2->AddTransition("a", s2);
+    s2->AddTransition("", s3);
+    s3->AddTransition("b", s4);
+    s4->AddTransition("a", s3);
+    s3->AddTransition("a", s5);
+    s5->AddTransition("a", s6);
+    s6->AddTransition("b", s5);
+    s5->AddTransition("", s2);
+
+    s1->MarkAsInitial();
+    s2->MarkAsFinal();
+}
+
+void Hw4Task6Aut(formal::Automaton& aut) {
+    // hw4 task6 automaton
+
+    auto i = aut.InsertState();
+    auto s1 = aut.InsertState();
+    auto s2 = aut.InsertState();
+    auto s3 = aut.InsertState();
+    auto s4 = aut.InsertState();
+    auto s5 = aut.InsertState();
+
+    i->AddTransition("a", s1);
+    s1->AddTransition("a", s2);
+    s1->AddTransition("b", s3);
+    s2->AddTransition("b", s1);
+    s3->AddTransition("a", s1);
+    s1->AddTransition("b", s4);
+    s4->AddTransition("a", s4);
+    s4->AddTransition("b", s5);
+    s5->AddTransition("a", s4);
+    s4->AddTransition("", i);
+
+    i->MarkAsInitial();
+    s4->MarkAsFinal();
+}
+
 TEST(GeneralTest, Hw3Task1Test) {
     // hw3 task1 automaton
     formal::Automaton aut;
@@ -53,31 +102,20 @@ TEST(GeneralTest, Hw3Task1Test) {
     EXPECT_TRUE(formal::DFAReadWord(aut, "bb"));
     EXPECT_TRUE(formal::DFAReadWord(aut, "ababb"));
     EXPECT_TRUE(formal::DFAReadWord(aut, "abababb"));
+
+    formal::MinimizeCDFA(aut);
+
+    EXPECT_FALSE(formal::DFAReadWord(aut, "abbaa"));
+    EXPECT_FALSE(formal::DFAReadWord(aut, "baab"));
+    EXPECT_FALSE(formal::DFAReadWord(aut, "baa"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "bb"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "ababb"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "abababb"));
 }
 
-TEST(GeneralTest, Hw4Task5Test) {
-    // hw4 task5 automaton
+TEST(GeneralTest, Hw4Task5TestRegExp) {
     formal::Automaton aut;
-
-    auto s1 = aut.InsertState();
-    auto s2 = aut.InsertState();
-    auto s3 = aut.InsertState();
-    auto s4 = aut.InsertState();
-    auto s5 = aut.InsertState();
-    auto s6 = aut.InsertState();
-
-    s1->AddTransition("a", s2);
-    s2->AddTransition("a", s2);
-    s2->AddTransition("", s3);
-    s3->AddTransition("b", s4);
-    s4->AddTransition("a", s3);
-    s3->AddTransition("a", s5);
-    s5->AddTransition("a", s6);
-    s6->AddTransition("b", s5);
-    s5->AddTransition("", s2);
-
-    s1->MarkAsInitial();
-    s2->MarkAsFinal();
+    Hw4Task5Aut(aut);
 
     formal::DumpAutomaton(aut, "dump_test");
 
@@ -109,30 +147,42 @@ TEST(GeneralTest, Hw4Task5Test) {
     EXPECT_EQ(regexp, "(1+b(a+b)*+a((a(a(a+b(ab)*aa)*(b(ab)*b)+b)+b)(a(aa(a+b(ab)*aa)*(b(ab)*b)+ab+b))*(1+b(a+b)*+a)))");
 }
 
-TEST(GeneralTest, Hw4Task6Test) {
-    // hw4 task6 automaton
+TEST(GeneralTest, Hw4Task5TestMinimize) {
     formal::Automaton aut;
+    Hw4Task5Aut(aut);
 
-    auto i = aut.InsertState();
-    auto s1 = aut.InsertState();
-    auto s2 = aut.InsertState();
-    auto s3 = aut.InsertState();
-    auto s4 = aut.InsertState();
-    auto s5 = aut.InsertState();
+    formal::DumpAutomaton(aut, "dump_test");
 
-    i->AddTransition("a", s1);
-    s1->AddTransition("a", s2);
-    s1->AddTransition("b", s3);
-    s2->AddTransition("b", s1);
-    s3->AddTransition("a", s1);
-    s1->AddTransition("b", s4);
-    s4->AddTransition("a", s4);
-    s4->AddTransition("b", s5);
-    s5->AddTransition("a", s4);
-    s4->AddTransition("", i);
+    formal::RemoveEpsTransitions(aut);
+    formal::TransformToDFA(aut);
 
-    i->MarkAsInitial();
-    s4->MarkAsFinal();
+    EXPECT_TRUE(formal::DFAReadWord(aut, "abaaabababababaa"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "aaaaaaaabaaba"));
+    EXPECT_FALSE(formal::DFAReadWord(aut, "abababababa"));
+    EXPECT_FALSE(formal::DFAReadWord(aut, "aabab"));
+    EXPECT_FALSE(formal::DFAReadWord(aut, ""));
+
+    formal::CompleteDFA(aut);
+    formal::ComplementCDFA(aut);
+
+    EXPECT_FALSE(formal::DFAReadWord(aut, "abaaabababababaa"));
+    EXPECT_FALSE(formal::DFAReadWord(aut, "aaaaaaaabaaba"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "abababababa"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "aabab"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, ""));
+
+    formal::MinimizeCDFA(aut);
+
+    EXPECT_FALSE(formal::DFAReadWord(aut, "abaaabababababaa"));
+    EXPECT_FALSE(formal::DFAReadWord(aut, "aaaaaaaabaaba"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "abababababa"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "aabab"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, ""));
+}
+
+TEST(GeneralTest, Hw4Task6TestRegExp) {
+    formal::Automaton aut;
+    Hw4Task6Aut(aut);
 
     formal::RemoveEpsTransitions(aut);
     formal::TransformToDFA(aut);
@@ -167,6 +217,43 @@ TEST(GeneralTest, Hw4Task6Test) {
     EXPECT_EQ(regexp, "(1+b(a+b)*+a(ab)*(1+a(1+a(a+b)*)+b((a((a(a+ba)*bb+b)a)*((a(a+ba)*bb+b)b)+b)(aa((a(a+ba)*bb+b)a)*((a(a+ba)*bb+b)b)+ab)*(1+b(a+b)*))))");
 }
 
+TEST(GeneralTest, Hw4Task6TestMinimize) {
+    formal::Automaton aut;
+    Hw4Task6Aut(aut);
+
+    formal::RemoveEpsTransitions(aut);
+    formal::TransformToDFA(aut);
+
+    EXPECT_TRUE(formal::DFAReadWord(aut, "aabbabaabbbabaaaaaabaaabbabaabbbabaaaaaabaaabbabaabbbabaaaaaaba"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "abababaaa"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "abababababababab"));
+
+    EXPECT_FALSE(formal::DFAReadWord(aut, "aababababaabbabababababbababba"));
+    EXPECT_FALSE(formal::DFAReadWord(aut, "aabbabbbbb"));
+    EXPECT_FALSE(formal::DFAReadWord(aut, ""));
+
+    formal::CompleteDFA(aut);
+    formal::ComplementCDFA(aut);
+
+    EXPECT_FALSE(formal::DFAReadWord(aut, "aabbabaabbbabaaaaaabaaabbabaabbbabaaaaaabaaabbabaabbbabaaaaaaba"));
+    EXPECT_FALSE(formal::DFAReadWord(aut, "abababaaa"));
+    EXPECT_FALSE(formal::DFAReadWord(aut, "abababababababab"));
+
+    EXPECT_TRUE(formal::DFAReadWord(aut, "aababababaabbabababababbababba"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "aabbabbbbb"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, ""));
+
+    formal::MinimizeCDFA(aut);
+
+    EXPECT_FALSE(formal::DFAReadWord(aut, "aabbabaabbbabaaaaaabaaabbabaabbbabaaaaaabaaabbabaabbbabaaaaaaba"));
+    EXPECT_FALSE(formal::DFAReadWord(aut, "abababaaa"));
+    EXPECT_FALSE(formal::DFAReadWord(aut, "abababababababab"));
+
+    EXPECT_TRUE(formal::DFAReadWord(aut, "aababababaabbabababababbababba"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "aabbabbbbb"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, ""));
+}
+
 TEST(GeneralTest, RegExpGenTest) {
     formal::Automaton aut;
 
@@ -183,6 +270,31 @@ TEST(GeneralTest, RegExpGenTest) {
 
     std::string regexp = formal::NFAToRegExp(aut);
     ASSERT_EQ(regexp, "(a)*a(b)*(b(a)*a(b)*)*");
+}
+
+TEST(GeneralTest, RegExpGenTest2) {
+    formal::Automaton aut({'a', 'b', 'c'});
+
+    formal::AutomatonState* s1 = aut.InsertState();
+    formal::AutomatonState* s2 = aut.InsertState();
+    formal::AutomatonState* s3 = aut.InsertState();
+    formal::AutomatonState* s4 = aut.InsertState();
+
+    s1->MarkAsInitial();
+    s3->MarkAsFinal();
+
+    s1->AddTransition("a", s2);
+    s2->AddTransition("a", s1);
+    s2->AddTransition("b", s3);
+    s3->AddTransition("b", s2);
+    s3->AddTransition("c", s4);
+    s4->AddTransition("c", s3);
+
+    formal::TransformToDFA(aut);
+    formal::CompleteDFA(aut);
+
+    std::string regexp = formal::NFAToRegExp(aut);
+    ASSERT_EQ(regexp, "(aa)*ab(bb+cc)*(ba(aa)*ab(bb+cc)*)*");
 }
 
 TEST(GeneralTest, Test1) {
@@ -221,6 +333,15 @@ TEST(GeneralTest, Test1) {
     formal::CompleteDFA(aut);
     formal::ComplementCDFA(aut);
 
+    EXPECT_FALSE(formal::DFAReadWord(aut, "aba"));
+    EXPECT_FALSE(formal::DFAReadWord(aut, "aab"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "ab"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "abb"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, ""));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "abababa"));
+    EXPECT_TRUE(formal::DFAReadWord(aut, "bab"));
+
+    formal::MinimizeCDFA(aut);
     EXPECT_FALSE(formal::DFAReadWord(aut, "aba"));
     EXPECT_FALSE(formal::DFAReadWord(aut, "aab"));
     EXPECT_TRUE(formal::DFAReadWord(aut, "ab"));

@@ -17,4 +17,5 @@ FetchContent_MakeAvailable(googletest)
 
 add_subdirectory(libformal)
 add_subdirectory(playground)
+add_subdirectory(hw4)
 add_subdirectory(tests)
