@@ -6,4 +6,5 @@ There are following CMake targets:
 - `playground` - libformal playground
 - `hw4` - automata from HW4. Generates a lot of pictures which are referred by my HW4 solutions.  
 - `tests` - tests powered by `gtest`
-- `regexp` - practical task 2 runner
+- `regexp` - practical task 2 CLI runner
+- `earley` - Earley algorithm CLI runner
