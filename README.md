@@ -2,7 +2,9 @@
 Requires libfmt (`libfmt-dev` package in Ubuntu)
 
 There are following CMake targets:
-- `libfmt` - static library
-- `playground` - libfmt playground
+- `libformal` - static library
+- `playground` - libformal playground
 - `hw4` - automata from HW4. Generates a lot of pictures which are referred by my HW4 solutions.  
 - `tests` - tests powered by `gtest`
+- `regexp` - practical task 2 CLI runner
+- `earley` - Earley algorithm CLI runner
