@@ -85,7 +85,7 @@ namespace formal {
         do {
             EarleyStateStorage proc_states = std::move(curr_states);
 
-            curr_states.Merge(Complete(proc_states));
+            curr_states = Complete(proc_states);
             curr_states.Merge(Predict(proc_states));
         } while (states_[j].Merge(curr_states));
     }

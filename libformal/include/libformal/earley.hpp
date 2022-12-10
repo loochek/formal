@@ -54,7 +54,7 @@ namespace formal {
         }
 
         EarleyStateStorage& operator=(EarleyStateStorage&& other) noexcept {
-            states_ = std::move(states_);
+            states_ = std::move(other.states_);
             empty_ = other.empty_;
             other.empty_ = true;
 

@@ -11,6 +11,7 @@ TEST(GeneralTest, EarleyTestCPS) {
 
     formal::EarleyParser parser(grammar);
 
+    EXPECT_TRUE(parser.parse(""));
     EXPECT_TRUE(parser.parse("aabb"));
     EXPECT_TRUE(parser.parse("abab"));
     EXPECT_TRUE(parser.parse("aababaabbb"));
@@ -71,4 +72,22 @@ TEST(GeneralTest, EarleyBadSRule) {
     gr_str = "S => .";
     grammar = formal::ParseGrammarFromString(gr_str);
     EXPECT_ANY_THROW(formal::EarleyParser parser2(grammar));
+}
+
+TEST(GeneralTest, NoEpsGrammar) {
+    // Grammar: specified words only
+    formal::CFGrammar grammar;
+    grammar.AddRule(formal::ParseRuleFromString("S => X"));
+    grammar.AddRule(formal::ParseRuleFromString("X => Y"));
+    grammar.AddRule(formal::ParseRuleFromString("Y => Z"));
+    grammar.AddRule(formal::ParseRuleFromString("Z => aboba"));
+    grammar.AddRule(formal::ParseRuleFromString("Z => amogus"));
+
+    formal::EarleyParser parser(grammar);
+
+    EXPECT_TRUE(parser.parse("aboba"));
+    EXPECT_TRUE(parser.parse("amogus"));
+
+    EXPECT_FALSE(parser.parse(""));
+    EXPECT_FALSE(parser.parse("kek"));
 }
