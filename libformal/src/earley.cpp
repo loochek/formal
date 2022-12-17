@@ -2,8 +2,6 @@
 #include <fmt/core.h>
 
 namespace formal {
-    inline CFNonTerminal START_SYMBOL = 'S';
-
     const std::unordered_set<EarleyState> EarleyStateStorage::empty_set_;
 
     EarleyParser::EarleyParser(const CFGrammar &grammar): grammar_(grammar) {
