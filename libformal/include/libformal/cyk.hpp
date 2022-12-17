@@ -20,9 +20,6 @@ namespace formal {
         bool parse(const std::string& word);
 
     private:
-
-
-    private:
         const CFGrammar& grammar_;
     };
 }

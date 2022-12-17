@@ -77,3 +77,15 @@ TEST(GeneralTest, CYKNoEpsGrammar) {
     EXPECT_FALSE(parser.parse(""));
     EXPECT_FALSE(parser.parse("kek"));
 }
+
+TEST(GeneralTest, CYKNoCNFTest) {
+    // Grammar: specified words only
+    formal::CFGrammar grammar;
+    grammar.AddRule(formal::ParseRuleFromString("S => X"));
+    grammar.AddRule(formal::ParseRuleFromString("X => Y"));
+    grammar.AddRule(formal::ParseRuleFromString("Y => Z"));
+    grammar.AddRule(formal::ParseRuleFromString("Z => aboba"));
+    grammar.AddRule(formal::ParseRuleFromString("Z => amogus"));
+
+    EXPECT_ANY_THROW(formal::CYKParser parser(grammar));
+}
