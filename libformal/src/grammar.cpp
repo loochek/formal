@@ -129,7 +129,7 @@ namespace formal {
                 }
 
                 CFNonTerminal last_part = lhs;
-                for (int i = 0; i < rule.rhs.size() - 1; i++) {
+                for (int i = 0; i < rule.rhs.size() - 2; i++) {
                     CFNonTerminal next_part = new_grammar.GetUnusedNonTerm();
                     new_grammar.AddRule(CFGrammarRule(last_part, fmt::format("{}{}", rule.rhs[i], next_part)));
                     last_part = next_part;

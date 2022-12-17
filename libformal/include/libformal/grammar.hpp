@@ -121,14 +121,14 @@ namespace formal {
                         break;
 
                     case 1:
-                        if (IsTerminal(rule.rhs[0])) {
+                        if (!IsTerminal(rule.rhs[0])) {
                             return false;
                         }
 
                         break;
 
                     case 2:
-                        if (!(IsTerminal(rule.rhs[0]) && IsTerminal(rule.rhs[1]))) {
+                        if (IsTerminal(rule.rhs[0]) || IsTerminal(rule.rhs[1])) {
                             return false;
                         }
 
