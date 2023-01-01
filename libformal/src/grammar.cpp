@@ -188,11 +188,11 @@ namespace formal {
                     case 2:
                         new_grammar.AddRule(rule);
 
-                        if (eps_generative_nts_mask[rule.rhs[0] - 'A']) {
-                            assert(!eps_generative_nts_mask[rule.rhs[1] - 'A']);
+                        if (eps_generative_nts_mask[rule.rhs[0] - 'A'] &&
+                                !eps_generative_nts_mask[rule.rhs[1] - 'A']) {
                             new_grammar.AddRule(CFGrammarRule(lhs, std::string(1, rule.rhs[1])));
-                        } else if (eps_generative_nts_mask[rule.rhs[1] - 'A']) {
-                            assert(!eps_generative_nts_mask[rule.rhs[0] - 'A']);
+                        } else if (eps_generative_nts_mask[rule.rhs[1] - 'A'] &&
+                                !eps_generative_nts_mask[rule.rhs[0] - 'A']) {
                             new_grammar.AddRule(CFGrammarRule(lhs, std::string(1, rule.rhs[0])));
                         }
                 }
@@ -237,7 +237,7 @@ namespace formal {
 
                 bool bad_rule = false;
                 for (CFNonTerminal s : rule.rhs) {
-                    if (IsTerminal(s) && (!reachable_nts_mask[lhs - 'A'] || !generative_nts_mask[lhs - 'A'])) {
+                    if (!IsTerminal(s) && (!reachable_nts_mask[s - 'A'] || !generative_nts_mask[s - 'A'])) {
                         bad_rule = true;
                         continue;
                     }

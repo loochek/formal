@@ -28,6 +28,35 @@ TEST(GeneralTest, CYKTestCPS) {
     EXPECT_FALSE(parser.parse("amogus"));
 }
 
+TEST(GeneralTest, CYKTestCPSInitialCNF) {
+    // Correct parentheses sequences grammar in CNF
+    formal::CFGrammar grammar;
+    grammar.AddRule(formal::CFGrammarRule('S', "AD"));
+    grammar.AddRule(formal::CFGrammarRule('S', "XC"));
+    grammar.AddRule(formal::CFGrammarRule('S', ""));
+    grammar.AddRule(formal::CFGrammarRule('X', "AD"));
+    grammar.AddRule(formal::CFGrammarRule('X', "XC"));
+    grammar.AddRule(formal::CFGrammarRule('C', "AD"));
+    grammar.AddRule(formal::CFGrammarRule('D', "b"));
+    grammar.AddRule(formal::CFGrammarRule('D', "XB"));
+    grammar.AddRule(formal::CFGrammarRule('A', "a"));
+    grammar.AddRule(formal::CFGrammarRule('B', "b"));
+    
+    formal::CYKParser parser(grammar);
+
+    EXPECT_TRUE(parser.parse(""));
+    EXPECT_TRUE(parser.parse("aabb"));
+    EXPECT_TRUE(parser.parse("abab"));
+    EXPECT_TRUE(parser.parse("aababaabbb"));
+    EXPECT_TRUE(parser.parse("aabbabababaaaaaababbaaaabbbabbbbbaabbbab"));
+    EXPECT_TRUE(parser.parse("aaaaaaabbbbabaaabbbbabaabaababaaaaabababbbabbabbaaabaaaaaababbbbbabaababbbbbbbbb"));
+
+    EXPECT_FALSE(parser.parse("bbaaabab"));
+    EXPECT_FALSE(parser.parse("aabbabababaabbaaaaabbabaaaabbbabbbbbaabbbab"));
+    EXPECT_FALSE(parser.parse("aaaaaaabbbbabaaababbabaabaababaaaaababaababbbabbabbaaabbaaaaababbbbbabaababbbbbbbbb"));
+    EXPECT_FALSE(parser.parse("amogus"));
+}
+
 TEST(GeneralTest, CYKTestPalindroms) {
     // Palindroms constructed with {a, b, c, o}
     std::string gr_str = "S => X\n"

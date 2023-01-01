@@ -13,6 +13,7 @@ TEST(GeneralTest, CNFEarleyTestCPS) {
     grammar.AddRule(formal::ParseRuleFromString("S => X"));
 
     formal::TransformToCNF(grammar);
+    EXPECT_TRUE(grammar.IsCNF());
     formal::SinglifyEntryRule(grammar);
     formal::EarleyParser parser(grammar);
 
@@ -46,6 +47,7 @@ TEST(GeneralTest, CNFEarleyTestPalindroms) {
     formal::CFGrammar grammar = formal::ParseGrammarFromString(gr_str);
 
     formal::TransformToCNF(grammar);
+    EXPECT_TRUE(grammar.IsCNF());
     formal::SinglifyEntryRule(grammar);
     formal::EarleyParser parser(grammar);
 
@@ -71,6 +73,7 @@ TEST(GeneralTest, CNFEarleyNoEpsGrammar) {
     grammar.AddRule(formal::ParseRuleFromString("Z => amogus"));
 
     formal::TransformToCNF(grammar);
+    EXPECT_TRUE(grammar.IsCNF());
     formal::SinglifyEntryRule(grammar);
     formal::EarleyParser parser(grammar);
 
